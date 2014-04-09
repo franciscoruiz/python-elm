@@ -1,0 +1,9 @@
+language: python
+python:
+  - "2.7"
+install: pip install .
+before_script:
+  - pip install -r tests/requirements.txt
+script:  coverage run --source=elm327 setup.py test
+after_success:
+  - coveralls
