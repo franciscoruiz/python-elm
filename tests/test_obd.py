@@ -27,6 +27,15 @@ class TestOBDCommand(object):
     def test_repr(self):
         eq_('OBDCommand(mode=0x01, pid=0x10)', repr(_OBD_COMMAND))
 
+    def test_equality(self):
+        ok_(_OBD_COMMAND == _OBD_COMMAND)
+        ok_(_OBD_COMMAND == OBDCommand(_OBD_COMMAND.mode, _OBD_COMMAND.pid))
+
+        assert_false(_OBD_COMMAND == OBDCommand(_OBD_COMMAND.mode, 0xAA))
+        assert_false(_OBD_COMMAND == OBDCommand(0xAA, _OBD_COMMAND.pid))
+
+        assert_false(_OBD_COMMAND == None)
+
 
 class TestOBDResponseConstruction(object):
 
