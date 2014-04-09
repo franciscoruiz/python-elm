@@ -28,23 +28,25 @@ from setuptools import find_packages
 from setuptools import setup
 
 _CURRENT_DIR_PATH = os.path.abspath(os.path.dirname(__file__))
-_README_CONTENTS = open(os.path.join(_CURRENT_DIR_PATH, 'README.md')).read()
+_README_CONTENTS = open(os.path.join(_CURRENT_DIR_PATH, "README.md")).read()
 _VERSION = \
-    open(os.path.join(_CURRENT_DIR_PATH, 'VERSION.txt')).readline().rstrip()
+    open(os.path.join(_CURRENT_DIR_PATH, "VERSION.txt")).readline().rstrip()
 
 
 setup(
-    name='python-elm',
+    name="python-elm",
     version=_VERSION,
-    description='',
+    description="Python library to communicate with a vehicle's PCM "
+        "(aka ECU) via an ELM327-like device",
     long_description=_README_CONTENTS,
     classifiers=[],
-    keywords='',
-    url='',
-    license='GPLv2',
-    packages=find_packages(exclude=['tests']),
+    keywords="",
+    author="Francisco Ruiz",
+    url="https://github.com/franciscoruiz/python-elm",
+    license="MIT",
+    packages=find_packages(exclude=["tests"]),
     install_requires=[
-        'pyserial>=2.7',
+        "pyserial>=2.7",
         ],
-    test_suite='nose.collector',
+    test_suite="nose.collector",
     )
