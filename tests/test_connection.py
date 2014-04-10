@@ -12,7 +12,7 @@ class TestSerialConnection(object):
 
     def setup(self):
         connection_class = _get_serial_connection()
-        self.connection = connection_class.auto_connect()
+        self.connection = connection_class.connect("/dev/pts/1")
         self.mock_port = self.connection._port
 
     def test_initialization(self):
