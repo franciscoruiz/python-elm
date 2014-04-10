@@ -89,11 +89,22 @@ class TestSerialConnection(object):
         connection = connection_class.auto_connect()
         eq_(None, connection)
 
-    def test_auto_connecting_with_device_found(self):
-        port_class = _MockSerialPort
-        connection_class = _get_serial_connection(port_class)
-        connection = connection_class.auto_connect()
-        assert_is_instance(connection, connection_class)
+    @_skip_if_no_ports
+    def test_auto_connecting_with_specific_baud_rate(self):
+        connection_class = _get_serial_connection()
+        connection = connection_class.auto_connect(baudrate=1)
+
+        mock_port = connection._port
+        eq_({"baudrate": 1}, mock_port.init_kwargs)
+
+    @_skip_if_no_ports
+    def test_auto_connecting_with_port_extra_parameters(self):
+        connection_class = _get_serial_connection()
+        connection = connection_class.auto_connect(1, "arg1", extra_arg=10)
+
+        mock_port = connection._port
+        eq_("arg1", mock_port.init_args[1])
+        assert_dict_contains_subset({"extra_arg": 10}, mock_port.init_kwargs)
 
 
 def _get_serial_connection(port_class=None):
