@@ -1,19 +1,19 @@
-from unittest.case import skipIf
-
 from nose.tools import assert_dict_contains_subset
 from nose.tools import assert_in
 from nose.tools import assert_is_instance
 from nose.tools import assert_is_none
 from nose.tools import eq_
 from serial.serialutil import SerialException
-from serial.tools.list_ports import comports
 
 from elm327.connection import SerialConnection
 
 
-_are_serial_ports_available = bool(comports())
-_skip_if_no_ports = \
-    skipIf(not _are_serial_ports_available, 'No serial port available')
+def setup():
+    # Make sure that the port detection utilities list some ports
+    from serial.tools import list_ports
+
+    if not list_ports.comports():
+        list_ports.comports = lambda: [('/dev/pts/1', 'pts1', 'Simulated port')]
 
 
 class TestSerialConnection(object):
@@ -76,20 +76,17 @@ class TestSerialConnection(object):
 
     #{ Auto-connection tests
 
-    @_skip_if_no_ports
     def test_auto_connecting_with_existing_device(self):
         connection_class = _get_serial_connection()
         connection = connection_class.auto_connect()
         assert_is_instance(connection, connection_class)
 
-    @_skip_if_no_ports
     def test_auto_connecting_with_no_suitable_device_found(self):
         port_class = _SerialPortCommunicationError
         connection_class = _get_serial_connection(port_class)
         connection = connection_class.auto_connect()
         eq_(None, connection)
 
-    @_skip_if_no_ports
     def test_auto_connecting_with_specific_baud_rate(self):
         connection_class = _get_serial_connection()
         connection = connection_class.auto_connect(baudrate=1)
@@ -97,7 +94,6 @@ class TestSerialConnection(object):
         mock_port = connection._port
         eq_({"baudrate": 1}, mock_port.init_kwargs)
 
-    @_skip_if_no_ports
     def test_auto_connecting_with_port_extra_parameters(self):
         connection_class = _get_serial_connection()
         connection = connection_class.auto_connect(1, "arg1", extra_arg=10)
