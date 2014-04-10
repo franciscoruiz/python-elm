@@ -29,45 +29,54 @@ from serial.serialutil import SerialException
 from serial.tools.list_ports import comports
 
 
-class SerialConnection(object):
-
-    _PORT_CLASS = Serial
+class SerialConnectionFactory(object):
 
     _DEFAULT_BAUDRATE = 38400
 
-    _LOGGER = getLogger(__name__ + 'SerialConnection')
+    _LOGGER = getLogger(__name__ + 'SerialConnectionFactory')
 
-    def __init__(self, port):
-        self._port = port
+    def __init__(self, port_class=Serial, available_ports=None):
+        self._port_class = port_class
+        self._available_ports = available_ports or comports()
 
-    @classmethod
-    def auto_connect(cls, *args, **kwargs):
+    def auto_connect(self, *args, **kwargs):
         connection = None
-        for device_name, device_description, hardware_id in comports():
+        for device_name, device_description, hardware_id in self._available_ports:
             device_description = "{} ({} - ID: {})".format(
                 device_description,
                 device_name,
                 hardware_id,
                 )
-            cls._LOGGER.debug('Trying to connect to %s', device_description)
-            connection = cls.connect(device_name, *args, **kwargs)
+            self._LOGGER.debug('Trying to connect to %s', device_description)
+            connection = self.connect(device_name, *args, **kwargs)
             if connection:
-                cls._LOGGER.info('Connected to %s', device_description)
+                self._LOGGER.info('Connected to %s', device_description)
                 break
         return connection
 
-    @classmethod
-    def connect(cls, device_name, baudrate=_DEFAULT_BAUDRATE, *args, **kwargs):
+    def connect(self, device_name, baudrate=_DEFAULT_BAUDRATE, *args, **kwargs):
         try:
-            port = \
-                cls._PORT_CLASS(device_name, baudrate=baudrate, *args, **kwargs)
+            port = self._port_class(
+                device_name,
+                baudrate=baudrate,
+                *args,
+                **kwargs
+                )
         except (SerialException, OSError):
-            cls._LOGGER.exception('Could not connect to device %r', device_name)
+            self._LOGGER.exception('Could not connect to device %r', device_name)
             connection = None
         else:
-            connection = cls(port)
+            connection = SerialConnection(port)
 
         return connection
+
+
+class SerialConnection(object):
+
+    _LOGGER = getLogger(__name__ + 'SerialConnection')
+
+    def __init__(self, port):
+        self._port = port
 
     def close(self):
         self._port.close()
