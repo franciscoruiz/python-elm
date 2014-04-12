@@ -23,6 +23,7 @@
 ################################################################################
 
 from logging import getLogger
+import time
 
 from serial import Serial
 from serial.serialutil import SerialException
@@ -78,6 +79,30 @@ class SerialConnection(object):
     def __init__(self, port):
         self._port = port
 
+    def send_command(self, data, read_delay=None):
+        """Write 'data' to the port and return the response form it"""
+        self._write(data)
+        if read_delay:
+            time.sleep(read_delay)
+        return self._read()
+
     def close(self):
         self._port.close()
         self._port = None
+
+    def _write(self, data):
+        self._port.flushInput()
+        self._port.flushOutput()
+        self._port.write(data)
+        self._port.write("\n\r")
+
+    def _read(self):
+        response = ""
+        while True:
+            c = self._port.read(1)
+            if not c or c == ">":
+                break
+            if c == "\x00":
+                continue
+            response += c
+        return response
