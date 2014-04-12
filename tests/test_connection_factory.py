@@ -1,4 +1,5 @@
 from nose.tools import assert_dict_contains_subset
+from nose.tools import assert_in
 from nose.tools import assert_is_instance
 from nose.tools import assert_is_none
 from nose.tools import assert_raises
@@ -60,6 +61,7 @@ class TestSerialConnectionFactory(object):
     def test_auto_connecting_with_existing_device(self):
         connection = self.factory.auto_connect()
         assert_is_instance(connection, SerialConnection)
+        eq_(self.available_port, connection._port.init_args[0])
 
     def test_auto_connecting_with_default_ports(self):
         """
@@ -70,9 +72,9 @@ class TestSerialConnectionFactory(object):
         factory = SerialConnectionFactory(_InitializableMockSerialPort)
         connection = factory.auto_connect()
 
-        default_ports = comports()
-        if default_ports:
-            assert_is_instance(connection, SerialConnection)
+        device_names = [port[0] for port in comports()]
+        if device_names:
+            assert_in(connection._port.init_args[0], device_names)
         else:
             assert_is_none(connection)
 

@@ -43,7 +43,7 @@ class SerialConnectionFactory(object):
 
     def __init__(self, port_class=Serial, available_ports=None):
         self._port_class = port_class
-        self._available_ports = None
+        self._available_ports = available_ports
 
     def auto_connect(self, *args, **kwargs):
         connection = None
@@ -51,6 +51,7 @@ class SerialConnectionFactory(object):
             try:
                 port = self._open_port(device_name, *args, **kwargs)
             except ConnectionError:
+                self._LOGGER.debug("Failed to connect to %r", device_name)
                 continue
             else:
                 self._LOGGER.info("Connected to %r", device_name)
