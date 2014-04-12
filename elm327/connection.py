@@ -34,7 +34,7 @@ class SerialConnectionFactory(object):
 
     _DEFAULT_BAUDRATE = 38400
 
-    _LOGGER = getLogger(__name__ + 'SerialConnectionFactory')
+    _LOGGER = getLogger(__name__ + "SerialConnectionFactory")
 
     def __init__(self, port_class=Serial, available_ports=None):
         self._port_class = port_class
@@ -48,10 +48,10 @@ class SerialConnectionFactory(object):
                 device_name,
                 hardware_id,
                 )
-            self._LOGGER.debug('Trying to connect to %s', device_description)
+            self._LOGGER.debug("Trying to connect to %s", device_description)
             connection = self.connect(device_name, *args, **kwargs)
             if connection:
-                self._LOGGER.info('Connected to %s', device_description)
+                self._LOGGER.info("Connected to %s", device_description)
                 break
         return connection
 
@@ -64,7 +64,7 @@ class SerialConnectionFactory(object):
                 **kwargs
                 )
         except (SerialException, OSError):
-            self._LOGGER.exception('Could not connect to device %r', device_name)
+            self._LOGGER.exception("Could not connect to device %r", device_name)
             connection = None
         else:
             connection = SerialConnection(port)
@@ -74,13 +74,13 @@ class SerialConnectionFactory(object):
 
 class SerialConnection(object):
 
-    _LOGGER = getLogger(__name__ + 'SerialConnection')
+    _LOGGER = getLogger(__name__ + "SerialConnection")
 
     def __init__(self, port):
         self._port = port
 
     def send_command(self, data, read_delay=None):
-        """Write 'data' to the port and return the response form it"""
+        """Write "data" to the port and return the response form it"""
         self._write(data)
         if read_delay:
             time.sleep(read_delay)

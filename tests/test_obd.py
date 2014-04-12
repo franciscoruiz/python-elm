@@ -1,5 +1,3 @@
-from unittest import skip
-
 from nose.tools import assert_false
 from nose.tools import assert_raises
 from nose.tools import eq_
@@ -25,7 +23,7 @@ class TestOBDCommand(object):
         eq_(("0x01", "0x10"), hex_words)
 
     def test_repr(self):
-        eq_('OBDCommand(mode=0x01, pid=0x10)', repr(_OBD_COMMAND))
+        eq_("OBDCommand(mode=0x01, pid=0x10)", repr(_OBD_COMMAND))
 
     def test_equality(self):
         ok_(_OBD_COMMAND == _OBD_COMMAND)

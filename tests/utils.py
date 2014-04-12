@@ -76,7 +76,7 @@ class MockSerialPort(object):
             eq_(
                 expected_method_name,
                 actual_method_name,
-                'Expected call to {!r} found {!r}'.format(
+                "Expected call to {!r} found {!r}".format(
                     expected_method_name,
                     actual_method_name,
                     )
@@ -84,7 +84,7 @@ class MockSerialPort(object):
             eq_(
                 expected_args,
                 actual_args,
-                'In call to {!r} expected args {!r} found {!r}'.format(
+                "In call to {!r} expected args {!r} found {!r}".format(
                     expected_method_name,
                     expected_args,
                     actual_args,
@@ -93,7 +93,7 @@ class MockSerialPort(object):
             eq_(
                 expected_args,
                 actual_args,
-                'In call to {!r} expected kwargs {!r} found {!r}'.format(
+                "In call to {!r} expected kwargs {!r} found {!r}".format(
                     expected_method_name,
                     expected_kwargs,
                     actual_kwargs,
@@ -141,6 +141,6 @@ class MockSerialPortDataReader(object):
         self.data_read = ""
 
     def read(self, size):
-        chunk = ''.join(islice(self._expected_data, size))
+        chunk = "".join(islice(self._expected_data, size))
         self.data_read += chunk
         return chunk

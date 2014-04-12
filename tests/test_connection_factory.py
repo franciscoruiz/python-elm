@@ -10,7 +10,7 @@ from elm327.connection import SerialConnectionFactory
 class TestSerialConnectionFactory(object):
 
     def setup(self):
-        self.available_port = ('/dev/pts/1', 'pts1', 'HardCodedPort')
+        self.available_port = ("/dev/pts/1", "pts1", "HardCodedPort")
         self.factory = SerialConnectionFactory(
             _InitializableMockSerialPort,
             [self.available_port],
