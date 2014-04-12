@@ -1,10 +1,12 @@
 from nose.tools import assert_dict_contains_subset
 from nose.tools import assert_is_instance
 from nose.tools import assert_is_none
+from nose.tools import assert_raises
 from nose.tools import eq_
 from serial.serialutil import SerialException
 from serial.tools.list_ports import comports
 
+from elm327.connection import ConnectionError
 from elm327.connection import SerialConnection
 from elm327.connection import SerialConnectionFactory
 
@@ -44,14 +46,14 @@ class TestSerialConnectionFactory(object):
     def test_serial_port_error_when_connecting(self):
         port_class = _SerialPortCommunicationError
         factory = SerialConnectionFactory(port_class)
-        connection = factory.connect("/dev/pts/1")
-        eq_(None, connection)
+        with assert_raises(ConnectionError):
+            factory.connect("/dev/pts/1")
 
     def test_connecting_to_non_existing_device(self):
         port_class = _SerialPortDeviceNotFoundError
         factory = SerialConnectionFactory(port_class)
-        connection = factory.connect("/dev/madeup")
-        eq_(None, connection)
+        with assert_raises(ConnectionError):
+            factory.connect("/dev/madeup")
 
     #{ Auto-connection tests
 

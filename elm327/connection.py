@@ -30,6 +30,11 @@ from serial.serialutil import SerialException
 from serial.tools.list_ports import comports
 
 
+class ConnectionError(Exception):
+
+    pass
+
+
 class SerialConnectionFactory(object):
 
     _DEFAULT_BAUDRATE = 38400
@@ -43,14 +48,23 @@ class SerialConnectionFactory(object):
     def auto_connect(self, *args, **kwargs):
         connection = None
         for device_name in self._get_available_ports():
-            connection = self.connect(device_name, *args, **kwargs)
-            if connection:
-                self._LOGGER.info("Connected to %s", device_name)
+            try:
+                port = self._open_port(device_name, *args, **kwargs)
+            except ConnectionError:
+                continue
+            else:
+                self._LOGGER.info("Connected to %r", device_name)
+                connection = SerialConnection(port)
                 break
         return connection
 
-    def connect(self, device_name, baudrate=_DEFAULT_BAUDRATE, *args, **kwargs):
-        self._LOGGER.exception("Trying to connect to %r", device_name)
+    def connect(self, device_name, *args, **kwargs):
+        port = self._open_port(device_name, *args, **kwargs)
+        self._LOGGER.info("Connected to %r", device_name)
+        connection = SerialConnection(port)
+        return connection
+
+    def _open_port(self, device_name, baudrate=_DEFAULT_BAUDRATE, *args, **kwargs):
         try:
             port = self._port_class(
                 device_name,
@@ -58,13 +72,9 @@ class SerialConnectionFactory(object):
                 *args,
                 **kwargs
                 )
-        except (SerialException, OSError):
-            self._LOGGER.exception("Could not connect to %r", device_name)
-            connection = None
-        else:
-            connection = SerialConnection(port)
-
-        return connection
+        except (SerialException, OSError) as exc:
+            raise ConnectionError(str(exc))
+        return port
 
     def _get_available_ports(self):
         if not self._available_ports:
