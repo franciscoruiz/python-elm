@@ -38,24 +38,19 @@ class SerialConnectionFactory(object):
 
     def __init__(self, port_class=Serial, available_ports=None):
         self._port_class = port_class
-        self._available_ports = available_ports or comports()
+        self._available_ports = None
 
     def auto_connect(self, *args, **kwargs):
         connection = None
-        for device_name, device_description, hardware_id in self._available_ports:
-            device_description = "{} ({} - ID: {})".format(
-                device_description,
-                device_name,
-                hardware_id,
-                )
-            self._LOGGER.debug("Trying to connect to %s", device_description)
+        for device_name in self._get_available_ports():
             connection = self.connect(device_name, *args, **kwargs)
             if connection:
-                self._LOGGER.info("Connected to %s", device_description)
+                self._LOGGER.info("Connected to %s", device_name)
                 break
         return connection
 
     def connect(self, device_name, baudrate=_DEFAULT_BAUDRATE, *args, **kwargs):
+        self._LOGGER.exception("Trying to connect to %r", device_name)
         try:
             port = self._port_class(
                 device_name,
@@ -64,12 +59,19 @@ class SerialConnectionFactory(object):
                 **kwargs
                 )
         except (SerialException, OSError):
-            self._LOGGER.exception("Could not connect to device %r", device_name)
+            self._LOGGER.exception("Could not connect to %r", device_name)
             connection = None
         else:
             connection = SerialConnection(port)
 
         return connection
+
+    def _get_available_ports(self):
+        if not self._available_ports:
+            ports = comports()
+            self._available_ports = [port[0] for port in ports]
+
+        return self._available_ports
 
 
 class SerialConnection(object):

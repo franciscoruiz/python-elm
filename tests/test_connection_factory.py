@@ -1,7 +1,9 @@
 from nose.tools import assert_dict_contains_subset
 from nose.tools import assert_is_instance
+from nose.tools import assert_is_none
 from nose.tools import eq_
 from serial.serialutil import SerialException
+from serial.tools.list_ports import comports
 
 from elm327.connection import SerialConnection
 from elm327.connection import SerialConnectionFactory
@@ -10,7 +12,7 @@ from elm327.connection import SerialConnectionFactory
 class TestSerialConnectionFactory(object):
 
     def setup(self):
-        self.available_port = ("/dev/pts/1", "pts1", "HardCodedPort")
+        self.available_port = "/dev/pts/1"
         self.factory = SerialConnectionFactory(
             _InitializableMockSerialPort,
             [self.available_port],
@@ -56,6 +58,21 @@ class TestSerialConnectionFactory(object):
     def test_auto_connecting_with_existing_device(self):
         connection = self.factory.auto_connect()
         assert_is_instance(connection, SerialConnection)
+
+    def test_auto_connecting_with_default_ports(self):
+        """
+        The system is scanned to check for available ports if an explicit
+        list is not provided
+
+        """
+        factory = SerialConnectionFactory(_InitializableMockSerialPort)
+        connection = factory.auto_connect()
+
+        default_ports = comports()
+        if default_ports:
+            assert_is_instance(connection, SerialConnection)
+        else:
+            assert_is_none(connection)
 
     def test_auto_connecting_with_no_suitable_device_found(self):
         port_class = _SerialPortCommunicationError
