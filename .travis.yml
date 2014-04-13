@@ -4,6 +4,7 @@ python:
 install: pip install .
 before_script:
   - pip install -r tests/requirements.txt
+  - python -c "from serial.tools.list_ports import comports; print '{} ports available'.format(len(comports()))"
 script:  coverage run --source=elm327 setup.py test
 after_success:
   - coveralls
