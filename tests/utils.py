@@ -1,5 +1,7 @@
+from functools import wraps
 from itertools import islice
 
+from nose.tools import assert_false
 from nose.tools import assert_in
 from nose.tools import eq_
 from nose.tools import ok_
@@ -7,6 +9,8 @@ from nose.tools import ok_
 
 def _mock_method(function):
     function_name = function.func_name
+
+    @wraps(function)
     def decorator(self, *args, **kwargs):
         self._method_calls.append((function_name, args, kwargs))
         result = function(self, *args, **kwargs)
@@ -22,6 +26,10 @@ class MockSerialPort(object):
         self._data_writer = writer or MockSerialPortDataWriter()
 
         self._data_reader = reader or MockSerialPortDataReader()
+
+    def clear_data(self):
+        self._data_writer.data_written = ""
+        self._data_reader.data_read = ""
 
     def assert_method_was_called(self, method_name, *args, **kwargs):
         method_calls = \
@@ -56,6 +64,13 @@ class MockSerialPort(object):
                 expected_data,
                 actual_data,
                 ),
+            )
+
+    def assert_no_data_was_written(self):
+        actual_data = self._data_writer.data_written
+        assert_false(
+            actual_data,
+            "No data was expected, found {!r}".format(actual_data),
             )
 
     def assert_data_was_read(self, data):
@@ -133,14 +148,19 @@ class MockSerialPortDataWriter(object):
 class MockSerialPortDataReader(object):
 
     def __init__(self, data=None):
-        data = data or "constant response"
-        if ">" not in data:
-            data += ">"
-        self._expected_data = iter(data)
-
         self.data_read = ""
+        self._expected_data = None
+
+        self._set_expected_data(data or "")
 
     def read(self, size):
         chunk = "".join(islice(self._expected_data, size))
         self.data_read += chunk
         return chunk
+
+    def _set_expected_data(self, data):
+        if ">" not in data:
+            data += ">"
+        self._expected_data = iter(data)
+
+        self.data_read = ""

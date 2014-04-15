@@ -17,8 +17,8 @@ class TestSerialConnectionFactory(object):
     def setup(self):
         self.available_port = "/dev/pts/1"
         self.factory = SerialConnectionFactory(
-            _InitializableMockSerialPort,
-            [self.available_port],
+            port_class=_InitializableMockSerialPort,
+            available_ports=[self.available_port],
             )
 
     #{ Connection tests
@@ -56,6 +56,15 @@ class TestSerialConnectionFactory(object):
         with assert_raises(ConnectionError):
             factory.connect("/dev/madeup")
 
+    def test_connecting_with_specific_connection_class(self):
+        factory = SerialConnectionFactory(
+            connection_class=_MockSerialConnection,
+            port_class=_InitializableMockSerialPort,
+            )
+        connection = factory.connect(self.available_port)
+
+        assert_is_instance(connection, _MockSerialConnection)
+
     #{ Auto-connection tests
 
     def test_auto_connecting_with_existing_device(self):
@@ -69,7 +78,9 @@ class TestSerialConnectionFactory(object):
         list is not provided
 
         """
-        factory = SerialConnectionFactory(_InitializableMockSerialPort)
+        factory = SerialConnectionFactory(
+            port_class=_InitializableMockSerialPort,
+            )
         connection = factory.auto_connect()
 
         device_names = [port[0] for port in comports()]
@@ -80,7 +91,10 @@ class TestSerialConnectionFactory(object):
 
     def test_auto_connecting_with_no_suitable_device_found(self):
         port_class = _SerialPortCommunicationError
-        factory = SerialConnectionFactory(port_class)
+        factory = SerialConnectionFactory(
+            port_class,
+            available_ports=[self.available_port],
+            )
         connection = factory.auto_connect()
         eq_(None, connection)
 
@@ -96,6 +110,16 @@ class TestSerialConnectionFactory(object):
         mock_port = connection._port
         eq_("arg1", mock_port.init_args[1])
         assert_dict_contains_subset({"extra_arg": 10}, mock_port.init_kwargs)
+
+    def test_auto_connecting_with_specific_connection_class(self):
+        factory = SerialConnectionFactory(
+            connection_class=_MockSerialConnection,
+            port_class=_InitializableMockSerialPort,
+            available_ports=[self.available_port],
+            )
+        connection = factory.auto_connect()
+
+        assert_is_instance(connection, _MockSerialConnection)
 
 
 class _SerialPortWithErrorOnInit(object):
@@ -114,6 +138,12 @@ class _SerialPortCommunicationError(_SerialPortWithErrorOnInit):
 class _SerialPortDeviceNotFoundError(_SerialPortWithErrorOnInit):
 
     _EXCEPTION_CLASS = OSError
+
+
+class _MockSerialConnection(object):
+
+    def __init__(self, *args, **kwargs):
+        pass
 
 
 class _InitializableMockSerialPort(object):

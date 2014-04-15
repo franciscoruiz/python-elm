@@ -26,9 +26,6 @@ _OBD_RESPONSE_NO_DATA = "NO DATA"
 
 _OBD_RESPONSE_UNSUPPORTED_COMMAND = "?"
 
-_OBD_RESPONSE_ID = int("40", 16)
-
-
 _INT_TO_HEX_WORD_FORMATTER = "{:0=2X}"
 
 _INT_TO_HEX_WORD_FORMATTER_PRETTY = "{:0=#4x}"
@@ -44,7 +41,7 @@ class NoDataReceivedError(ELMError):
     pass
 
 
-class UnsupportedCommandError(ELMError):
+class CommandNotSupportedError(ELMError):
 
     pass
 
@@ -67,6 +64,9 @@ class OBDCommand(object):
             return NotImplemented
         return self.__dict__ == other.__dict__
 
+    def __hash__(self):
+        return hash((self.mode, self.pid))
+
     def __repr__(self):
         return "{}(mode={}, pid={})".format(
             self.__class__.__name__,
@@ -85,34 +85,20 @@ def _convert_int_to_hex_word(i, pretty=False):
 
 class OBDResponse(object):
 
-    def __init__(self, command, raw_data):
-        self.command = command
-        self.raw_data = tuple(raw_data)
-
-    @classmethod
-    def make(cls, response_raw):
-        if response_raw == _OBD_RESPONSE_NO_DATA:
-            raise NoDataReceivedError()
-
-        if response_raw == _OBD_RESPONSE_UNSUPPORTED_COMMAND:
-            raise UnsupportedCommandError()
-
-        response_words = _convert_raw_response_to_words(response_raw)
-
-        response_mode = response_words[0]
-        response_pid = response_words[1]
-        command = _parse_response_command(response_mode, response_pid)
-
-        raw_data = response_words[2:]
-
-        return cls(command, raw_data)
+    def __init__(self, raw_data):
+        self.raw_data = raw_data
 
 
-def _parse_response_command(response_mode, response_pid):
-    command_mode = response_mode - _OBD_RESPONSE_ID
-    command_pid = response_pid
-    command = OBDCommand(command_mode, command_pid)
-    return command
+def make_obd_response(response_raw):
+    if response_raw == _OBD_RESPONSE_NO_DATA:
+        raise NoDataReceivedError()
+
+    if response_raw == _OBD_RESPONSE_UNSUPPORTED_COMMAND:
+        raise CommandNotSupportedError()
+
+    response_words = _convert_raw_response_to_words(response_raw)
+    raw_data = tuple(response_words[2:])
+    return OBDResponse(raw_data)
 
 
 def _convert_raw_response_to_words(raw_response):

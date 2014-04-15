@@ -3,10 +3,10 @@ from nose.tools import assert_raises
 from nose.tools import eq_
 from nose.tools import ok_
 
+from elm327.obd import CommandNotSupportedError
 from elm327.obd import NoDataReceivedError
 from elm327.obd import OBDCommand
-from elm327.obd import OBDResponse
-from elm327.obd import UnsupportedCommandError
+from elm327.obd import make_obd_response
 
 
 _OBD_COMMAND = OBDCommand(0x01, 0x10)
@@ -34,20 +34,14 @@ class TestOBDCommand(object):
 
         assert_false(_OBD_COMMAND == None)
 
+    def test_hash(self):
+        eq_(hash(_OBD_COMMAND), hash(_OBD_COMMAND))
+
 
 class TestOBDResponseConstruction(object):
 
-    def test_requested_command_identification(self):
-        """
-        The command the resulted in the response can be identified from the
-        response.
-
-        """
-        response = OBDResponse.make("41 10 00 00 00")
-        eq_(_OBD_COMMAND, response.command)
-
     def test_response_raw_data(self):
-        response = OBDResponse.make("41 10 0A 0B 0C D0")
+        response = make_obd_response("41 10 0A 0B 0C D0")
         expected_raw_data = (10, 11, 12, 208)
         eq_(expected_raw_data, response.raw_data)
 
@@ -57,12 +51,12 @@ class TestOBDResponseConstruction(object):
 
         """
         with assert_raises(NoDataReceivedError):
-            OBDResponse.make("NO DATA")
+            make_obd_response("NO DATA")
 
     def test_unsupported_command_response(self):
         """
         An exception is raised when a "?" response is received.
 
         """
-        with assert_raises(UnsupportedCommandError):
-            OBDResponse.make("?")
+        with assert_raises(CommandNotSupportedError):
+            make_obd_response("?")
