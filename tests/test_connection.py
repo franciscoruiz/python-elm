@@ -129,6 +129,32 @@ class TestELMInterfaceConnection(object):
         assert_is_instance(response, OBDResponse)
         eq_((1, 35, 69, 103), response.raw_data)
 
+    def test_sending_explicit_unsupported_pid_command(self):
+        mock_port = _MockOBDPort({
+            OBDCommand(0x01, 0x00): "41 00 7F FF FF FF",
+            OBDCommand(0x01, 0x20): "41 20 7F FF FF FF",
+            OBDCommand(0x01, 0x40): "41 40 7F FF FF FF",
+            OBDCommand(0x01, 0x60): "41 60 7F FF FF FF",
+            OBDCommand(0x01, 0x80): "41 80 7F FF FF FF",
+            OBDCommand(0x01, 0xA0): "41 A0 7F FF FF FF",
+            OBDCommand(0x01, 0xC0): "41 C0 7F FF FF FF",
+            })
+        connection = ELMInterfaceConnection(mock_port)
+
+        unsupported_pid_commands = [
+            OBDCommand(0x01, 0x01),
+            OBDCommand(0x01, 0x21),
+            OBDCommand(0x01, 0x41),
+            OBDCommand(0x01, 0x61),
+            OBDCommand(0x01, 0x81),
+            OBDCommand(0x01, 0xA1),
+            OBDCommand(0x01, 0xC1),
+            ]
+
+        for command in unsupported_pid_commands:
+            with assert_raises(CommandNotSupportedError):
+                connection.send_obd_command(command)
+
     def test_sending_non_explicitly_unsupported_pid_command(self):
         command = OBDCommand(0x01, 0x01)
         mock_port = _MockOBDPort({

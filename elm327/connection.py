@@ -30,6 +30,7 @@ from serial.serialutil import SerialException
 from serial.tools.list_ports import comports
 
 from elm327.obd import CommandNotSupportedError
+from elm327.obd import OBDCommand
 from elm327.obd import make_obd_response
 
 
@@ -132,6 +133,16 @@ class SerialConnectionFactory(object):
 
 
 class ELMInterfaceConnection(SerialConnection):
+
+    _UNSUPPORTED_PID_COMMANDS = [
+        OBDCommand(0x01, 0x01),
+        OBDCommand(0x01, 0x21),
+        OBDCommand(0x01, 0x41),
+        OBDCommand(0x01, 0x61),
+        OBDCommand(0x01, 0x81),
+        OBDCommand(0x01, 0xA1),
+        OBDCommand(0x01, 0xC1),
+        ]
 
     _LOGGER = getLogger(__name__ + "ELMInterfaceConnection")
 
