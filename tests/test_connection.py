@@ -9,7 +9,6 @@ from nose.tools import eq_
 from elm327.connection import CommandNotSupportedError
 from elm327.connection import ELMInterfaceConnection
 from elm327.connection import SerialConnection
-from elm327.obd import NoDataReceivedError
 from elm327.obd import OBDCommand
 from elm327.obd import OBDResponse
 from tests.utils import MockSerialPort
@@ -144,15 +143,6 @@ class TestELMInterfaceConnection(object):
             connection.send_obd_command(command)
 
         mock_port.assert_no_data_was_written()
-
-    def test_sending_command_with_no_response(self):
-        command = OBDCommand(0x01, 0x01)
-        mock_port = _MockOBDPort({
-            command: "NO DATA",
-            })
-        connection = ELMInterfaceConnection(mock_port)
-        with assert_raises(NoDataReceivedError):
-            connection.send_obd_command(command)
 
 
 class _MockOBDPort(MockSerialPort):

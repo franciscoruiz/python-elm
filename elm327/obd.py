@@ -36,11 +36,6 @@ class ELMError(Exception):
     pass
 
 
-class NoDataReceivedError(ELMError):
-
-    pass
-
-
 class CommandNotSupportedError(ELMError):
 
     pass
@@ -91,7 +86,7 @@ class OBDResponse(object):
 
 def make_obd_response(response_raw):
     if response_raw == _OBD_RESPONSE_NO_DATA:
-        raise NoDataReceivedError()
+        return None
 
     if response_raw == _OBD_RESPONSE_UNSUPPORTED_COMMAND:
         raise CommandNotSupportedError()

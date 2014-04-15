@@ -1,10 +1,10 @@
 from nose.tools import assert_false
+from nose.tools import assert_is_none
 from nose.tools import assert_raises
 from nose.tools import eq_
 from nose.tools import ok_
 
 from elm327.obd import CommandNotSupportedError
-from elm327.obd import NoDataReceivedError
 from elm327.obd import OBDCommand
 from elm327.obd import make_obd_response
 
@@ -50,8 +50,8 @@ class TestOBDResponseConstruction(object):
         An exception is raised when a "NO DATA" response is received.
 
         """
-        with assert_raises(NoDataReceivedError):
-            make_obd_response("NO DATA")
+        response = make_obd_response("NO DATA")
+        assert_is_none(response)
 
     def test_unsupported_command_response(self):
         """
