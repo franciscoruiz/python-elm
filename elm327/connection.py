@@ -29,9 +29,6 @@ from serial import Serial
 from serial.serialutil import SerialException
 from serial.tools.list_ports import comports
 
-from elm327.obd import CommandNotSupportedError
-from elm327.obd import make_obd_response
-
 
 class ConnectionError(Exception):
 
@@ -81,84 +78,36 @@ class SerialConnectionFactory(object):
 
     _LOGGER = getLogger(__name__ + "SerialConnectionFactory")
 
-    def __init__(
-        self,
-        connection_class=SerialConnection,
-        port_class=Serial,
-        available_ports=None,
-        ):
-        self._connection_class = connection_class
+    def __init__(self, port_class=Serial, **port_init_kwargs):
         self._port_class = port_class
-        self._available_ports = available_ports
 
-    def auto_connect(self, *args, **kwargs):
+        port_init_kwargs.setdefault('baudrate', self._DEFAULT_BAUDRATE)
+        self._port_init_kwargs = port_init_kwargs
+
+    def auto_connect(self, available_ports=None):
+        if not available_ports:
+            ports = comports()
+            available_ports = [port[0] for port in ports]
+
         connection = None
-        for device_name in self._get_available_ports():
+        for device_name in available_ports:
             try:
-                port = self._open_port(device_name, *args, **kwargs)
+                connection = self.connect(device_name)
             except ConnectionError:
                 self._LOGGER.debug("Failed to connect to %r", device_name)
-                continue
             else:
-                self._LOGGER.info("Connected to %r", device_name)
-                connection = self._connection_class(port)
                 break
         return connection
 
-    def connect(self, device_name, *args, **kwargs):
-        port = self._open_port(device_name, *args, **kwargs)
+    def connect(self, device_name):
+        port = self._open_port(device_name)
         self._LOGGER.info("Connected to %r", device_name)
-        connection = self._connection_class(port)
+        connection = SerialConnection(port)
         return connection
 
-    def _open_port(self, device_name, baudrate=_DEFAULT_BAUDRATE, *args, **kwargs):
+    def _open_port(self, device_name):
         try:
-            port = self._port_class(
-                device_name,
-                baudrate=baudrate,
-                *args,
-                **kwargs
-                )
+            port = self._port_class(device_name, **self._port_init_kwargs)
         except (SerialException, OSError) as exc:
             raise ConnectionError(str(exc))
         return port
-
-    def _get_available_ports(self):
-        if not self._available_ports:
-            ports = comports()
-            self._available_ports = [port[0] for port in ports]
-
-        return self._available_ports
-
-
-class ELMInterfaceConnection(SerialConnection):
-
-    _LOGGER = getLogger(__name__ + "ELMInterfaceConnection")
-
-    def __init__(self, *args, **kwargs):
-        super(ELMInterfaceConnection, self).__init__(*args, **kwargs)
-
-        self._unsupported_commands = []
-
-        self.send_command("AT Z")
-        self.send_command("AT E0")
-
-    def send_command(self, data, read_delay=None):
-        super_ = super(ELMInterfaceConnection, self)
-        response = super_.send_command(data, read_delay)
-        return response.strip()
-
-    def send_obd_command(self, command, read_delay=None):
-        if command in self._unsupported_commands:
-            raise CommandNotSupportedError()
-
-        command_data = ' '.join(command.to_hex_words())
-        response_data = self.send_command(command_data, read_delay)
-
-        try:
-            response = make_obd_response(response_data)
-        except CommandNotSupportedError:
-            self._unsupported_commands.append(command)
-            raise
-
-        return response

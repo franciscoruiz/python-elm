@@ -22,6 +22,9 @@
 # SOFTWARE.
 ################################################################################
 
+from logging import getLogger
+
+
 _OBD_RESPONSE_NO_DATA = "NO DATA"
 
 _OBD_RESPONSE_UNSUPPORTED_COMMAND = "?"
@@ -36,9 +39,62 @@ class ELMError(Exception):
     pass
 
 
-class CommandNotSupportedError(ELMError):
+class ValueNotAvailableError(ELMError):
 
     pass
+
+
+class OBDInterface(object):
+
+    _LOGGER = getLogger(__name__ + "OBDInterface")
+
+    def __init__(self, connection):
+        self._connection = connection
+
+        self._unsupported_commands = []
+
+        self._send_command("AT Z")
+        self._send_command("AT E0")
+
+    def _send_command(self, data, read_delay=None):
+        response = self._connection.send_command(data, read_delay)
+        return response.strip()
+
+    def read_pcm_value(self, pcm_value_definition, read_delay=None):
+        obd_command = pcm_value_definition.command
+        if obd_command in self._unsupported_commands:
+            raise ValueNotAvailableError()
+
+        command_data = ' '.join(obd_command.to_hex_words())
+        response_data = self._send_command(command_data, read_delay)
+
+        try:
+            response = self._make_pcm_value(response_data, pcm_value_definition)
+        except ValueNotAvailableError:
+            self._unsupported_commands.append(obd_command)
+            raise
+
+        return response
+
+    @staticmethod
+    def _make_pcm_value(response_raw, pcm_value_definition):
+        if response_raw == _OBD_RESPONSE_NO_DATA:
+            return None
+
+        if response_raw == _OBD_RESPONSE_UNSUPPORTED_COMMAND:
+            raise ValueNotAvailableError()
+
+        response_words = _convert_raw_response_to_words(response_raw)
+        raw_data = tuple(response_words[2:])
+
+        pcm_value = pcm_value_definition.parser(raw_data)
+        return pcm_value
+
+
+def _convert_raw_response_to_words(raw_response):
+    words_as_str = raw_response.split()
+    words = [int(word, 16) for word in words_as_str]
+    return words
 
 
 class OBDCommand(object):
@@ -76,27 +132,3 @@ def _convert_int_to_hex_word(i, pretty=False):
         formatter = _INT_TO_HEX_WORD_FORMATTER
 
     return formatter.format(i)
-
-
-class OBDResponse(object):
-
-    def __init__(self, raw_data):
-        self.raw_data = raw_data
-
-
-def make_obd_response(response_raw):
-    if response_raw == _OBD_RESPONSE_NO_DATA:
-        return None
-
-    if response_raw == _OBD_RESPONSE_UNSUPPORTED_COMMAND:
-        raise CommandNotSupportedError()
-
-    response_words = _convert_raw_response_to_words(response_raw)
-    raw_data = tuple(response_words[2:])
-    return OBDResponse(raw_data)
-
-
-def _convert_raw_response_to_words(raw_response):
-    words_as_str = raw_response.split()
-    words = [int(word, 16) for word in words_as_str]
-    return words

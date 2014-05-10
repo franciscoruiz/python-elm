@@ -14,35 +14,33 @@ from elm327.connection import SerialConnectionFactory
 
 class TestSerialConnectionFactory(object):
 
-    def setup(self):
-        self.available_port = "/dev/pts/1"
-        self.factory = SerialConnectionFactory(
-            port_class=_InitializableMockSerialPort,
-            available_ports=[self.available_port],
-            )
-
-    #{ Connection tests
+    # { Connection tests
 
     def test_connecting_to_existing_device(self):
-        connection = self.factory.connect("/dev/pts/1")
+        factory = SerialConnectionFactory(port_class=_InitializableMockSerialPort)
+        connection = factory.connect("/dev/pts/1")
 
         assert_is_instance(connection, SerialConnection)
 
-        mock_port = connection._port
-        eq_({"baudrate": 38400}, mock_port.init_kwargs)
-
     def test_connecting_with_specific_baud_rate(self):
-        connection = self.factory.connect("/dev/pts/1", baudrate=1)
+        factory = SerialConnectionFactory(
+            port_class=_InitializableMockSerialPort,
+            baudrate=1,
+            )
+        connection = factory.connect("/dev/pts/1")
 
         mock_port = connection._port
         eq_({"baudrate": 1}, mock_port.init_kwargs)
 
     def test_connecting_with_port_extra_parameters(self):
-        connection = self.factory.connect("/dev/pts/1", 1, "arg1", extra_arg=10)
+        factory = SerialConnectionFactory(
+            port_class=_InitializableMockSerialPort,
+            extra_arg=10,
+            )
+        connection = factory.connect("/dev/pts/1")
 
         mock_port = connection._port
-        eq_(("/dev/pts/1", "arg1"), mock_port.init_args)
-        assert_dict_contains_subset({"extra_arg": 10}, mock_port.init_kwargs)
+        eq_({"baudrate": 38400, "extra_arg": 10}, mock_port.init_kwargs)
 
     def test_serial_port_error_when_connecting(self):
         port_class = _SerialPortCommunicationError
@@ -56,21 +54,15 @@ class TestSerialConnectionFactory(object):
         with assert_raises(ConnectionError):
             factory.connect("/dev/madeup")
 
-    def test_connecting_with_specific_connection_class(self):
-        factory = SerialConnectionFactory(
-            connection_class=_MockSerialConnection,
-            port_class=_InitializableMockSerialPort,
-            )
-        connection = factory.connect(self.available_port)
-
-        assert_is_instance(connection, _MockSerialConnection)
-
-    #{ Auto-connection tests
+    # { Auto-connection tests
 
     def test_auto_connecting_with_existing_device(self):
-        connection = self.factory.auto_connect()
+        factory = SerialConnectionFactory(port_class=_InitializableMockSerialPort)
+
+        connection = factory.auto_connect(["/dev/pts/1"])
+
         assert_is_instance(connection, SerialConnection)
-        eq_(self.available_port, connection._port.init_args[0])
+        eq_("/dev/pts/1", connection._port.init_args[0])
 
     def test_auto_connecting_with_default_ports(self):
         """
@@ -91,35 +83,33 @@ class TestSerialConnectionFactory(object):
 
     def test_auto_connecting_with_no_suitable_device_found(self):
         port_class = _SerialPortCommunicationError
-        factory = SerialConnectionFactory(
-            port_class,
-            available_ports=[self.available_port],
-            )
-        connection = factory.auto_connect()
+        factory = SerialConnectionFactory(port_class)
+
+        connection = factory.auto_connect(["/dev/pts/1"])
+
         eq_(None, connection)
 
     def test_auto_connecting_with_specific_baud_rate(self):
-        connection = self.factory.auto_connect(baudrate=1)
+        factory = SerialConnectionFactory(
+            port_class=_InitializableMockSerialPort,
+            baudrate=1,
+            )
+
+        connection = factory.auto_connect(["/dev/pts/1"])
 
         mock_port = connection._port
         eq_({"baudrate": 1}, mock_port.init_kwargs)
 
     def test_auto_connecting_with_port_extra_parameters(self):
-        connection = self.factory.auto_connect(1, "arg1", extra_arg=10)
+        factory = SerialConnectionFactory(
+            _InitializableMockSerialPort,
+            extra_arg=10,
+            )
+
+        connection = factory.auto_connect(["/dev/pts/1"])
 
         mock_port = connection._port
-        eq_("arg1", mock_port.init_args[1])
-        assert_dict_contains_subset({"extra_arg": 10}, mock_port.init_kwargs)
-
-    def test_auto_connecting_with_specific_connection_class(self):
-        factory = SerialConnectionFactory(
-            connection_class=_MockSerialConnection,
-            port_class=_InitializableMockSerialPort,
-            available_ports=[self.available_port],
-            )
-        connection = factory.auto_connect()
-
-        assert_is_instance(connection, _MockSerialConnection)
+        eq_({"baudrate": 38400, "extra_arg": 10}, mock_port.init_kwargs)
 
 
 class _SerialPortWithErrorOnInit(object):
