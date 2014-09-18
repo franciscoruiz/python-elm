@@ -28,7 +28,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 _CURRENT_DIR_PATH = os.path.abspath(os.path.dirname(__file__))
-_README_CONTENTS = open(os.path.join(_CURRENT_DIR_PATH, "README.txt")).read()
+_README_CONTENTS = open(os.path.join(_CURRENT_DIR_PATH, "README.rst")).read()
 _VERSION = \
     open(os.path.join(_CURRENT_DIR_PATH, "VERSION.txt")).readline().rstrip()
 
