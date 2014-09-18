@@ -28,7 +28,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 _CURRENT_DIR_PATH = os.path.abspath(os.path.dirname(__file__))
-_README_CONTENTS = open(os.path.join(_CURRENT_DIR_PATH, "README.md")).read()
+_README_CONTENTS = open(os.path.join(_CURRENT_DIR_PATH, "README.txt")).read()
 _VERSION = \
     open(os.path.join(_CURRENT_DIR_PATH, "VERSION.txt")).readline().rstrip()
 
@@ -39,8 +39,15 @@ setup(
     description="Python library to communicate with a vehicle's PCM "
         "(aka ECU) via an ELM327-like device",
     long_description=_README_CONTENTS,
-    classifiers=[],
-    keywords="",
+    classifiers=[
+      "Development Status :: 3 - Alpha",
+      "Intended Audience :: Developers",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 2.7",
+      "Topic :: Software Development :: Libraries :: Python Modules",
+      ],
+    keywords=["OBDII", "ELM327", "PCM"],
     author="Francisco Ruiz",
     url="https://github.com/franciscoruiz/python-elm",
     license="MIT",
