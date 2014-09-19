@@ -27,15 +27,14 @@ import os
 from setuptools import find_packages
 from setuptools import setup
 
+
 _CURRENT_DIR_PATH = os.path.abspath(os.path.dirname(__file__))
 _README_CONTENTS = open(os.path.join(_CURRENT_DIR_PATH, "README.rst")).read()
-_VERSION = \
-    open(os.path.join(_CURRENT_DIR_PATH, "VERSION.txt")).readline().rstrip()
 
 
 setup(
     name="python-elm",
-    version=_VERSION,
+    version="1.0a",
     description="Python library to communicate with a vehicle's PCM "
         "(aka ECU) via an ELM327-like device",
     long_description=_README_CONTENTS,
